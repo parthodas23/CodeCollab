@@ -1,30 +1,13 @@
 import { Router } from "express";
-import User from "../model/User.js";
+
+import { register, login, refresh } from "../controller/authController.js";
 
 const router = Router();
 
-router.post("/register", async (req, res) => {
-  try {
-    const data = new User(req.body);
-    const savedData = await data.save();
-    res.status(200).json(savedData);
-  } catch (error) {
-    res.status(500).json(error);
-  }
-});
+router.post("/register", register);
 
-router.post("/login", async (req, res) => {
-  try {
-    const { username, password } = req.body;
-    const data = await User.findOne({username, password});
-    if (data) {
-      res.status(200).json(data);
-    }
+router.post("/login", login);
 
-    return res.status(500).json("Something went wrong");
-  } catch (error) {
-    res.status(500).json(error);
-  }
-});
+router.post("/refresh", refresh);
 
 export default router;
