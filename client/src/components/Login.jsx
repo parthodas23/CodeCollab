@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 function Login() {
-  const [username, setUsername] = useState("");
+  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const navigate = useNavigate();
 
@@ -10,11 +10,16 @@ function Login() {
     e.preventDefault();
 
     try {
-      const res = await axios.post("http://localhost:5000/api/login", {
-        username: username,
-        password: password,
-      });
-
+      const res = await axios.post(
+        "http://localhost:5000/api/login",
+        {
+          email: email,
+          password: password,
+        },
+        { withCredentials: true }
+      );
+      localStorage.setItem("accessToken", res.data.accessToken);
+      alert("Login Successfull");
       navigate("/");
     } catch (error) {
       console.log(error);
@@ -31,10 +36,10 @@ function Login() {
         <div>
           <input
             type="text"
-            placeholder="username"
+            placeholder="email address"
             required
-            value={username}
-            onChange={(e) => setUsername(e.target.value)}
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
             className="outline-none border-b border-b-green-500 text-center px-2 py-2 mt-6"
           />
           <input
