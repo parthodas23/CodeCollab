@@ -4,19 +4,11 @@ import jwt from "jsonwebtoken";
 import { ENV } from "../lib/ENV.js";
 
 const generateAccessToken = (user) => {
-  try {
-    return jwt.sign({ id: user._id }, ENV.ACCESS_SECRET, { expiresIn: "15m" });
-  } catch (error) {
-    return res.status(403).json(error);
-  }
+  return jwt.sign({ id: user._id }, ENV.ACCESS_SECRET, { expiresIn: "15m" });
 };
 
 const generateRefreshToken = (user) => {
-  try {
-    return jwt.sign({ id: user._id }, ENV.REFRESH_SECRET, { expiresIn: "10d" });
-  } catch (error) {
-    return res.status(403).json(error);
-  }
+  return jwt.sign({ id: user._id }, ENV.REFRESH_SECRET, { expiresIn: "10d" });
 };
 
 export const register = async (req, res) => {
@@ -77,7 +69,7 @@ export const refresh = async (req, res) => {
 
       const newRefreshToken = generateRefreshToken(user);
 
-      res.send(200).json({ refreshToken: newRefreshToken });
+      res.status(200).json({ refreshToken: newRefreshToken });
     });
   } catch (error) {
     res.status(500).json(error);
