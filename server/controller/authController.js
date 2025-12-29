@@ -4,11 +4,11 @@ import jwt from "jsonwebtoken";
 import { ENV } from "../lib/ENV.js";
 
 const generateAccessToken = (user) => {
-  return jwt.sign({ id: user._id }, ENV.ACCESS_SECRET, { expiresIn: "15m" });
+  return jwt.sign({ id: user._id }, ENV.ACCESS_SECRET, { expiresIn: "15s" });
 };
 
 const generateRefreshToken = (user) => {
-  return jwt.sign({ id: user._id }, ENV.REFRESH_SECRET, { expiresIn: "10d" });
+  return jwt.sign({ id: user._id }, ENV.REFRESH_SECRET, { expiresIn: "30s" });
 };
 
 export const register = async (req, res) => {
@@ -59,17 +59,17 @@ export const login = async (req, res) => {
 export const refresh = async (req, res) => {
   try {
     const refreshToken = req.cookies.refreshToken;
-    if (!refreshToken) return res.sendStatus(403);
+    if (!refreshToken) return res.sendStatus(401);
 
     const user = await User.findOne({ refreshToken });
-    if (!user) return res.sendStatus(403);
+    if (!user) return res.sendStatus(401);
 
     jwt.verify(refreshToken, ENV.REFRESH_SECRET, (err, decodedUser) => {
-      if (err) return res.sendStatus(403);
+      if (err) return res.sendStatus(401);
 
-      const newRefreshToken = generateRefreshToken(user);
+      const newAccessToken = generateAccessToken(user);
 
-      res.status(200).json({ refreshToken: newRefreshToken });
+      res.status(200).json({ accessToken: newAccessToken });
     });
   } catch (error) {
     res.status(500).json(error);

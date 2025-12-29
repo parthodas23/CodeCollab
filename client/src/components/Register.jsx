@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import axios from "axios";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 
 function Register() {
   const [name, setName] = useState("");
@@ -24,41 +24,55 @@ function Register() {
     }
   };
   return (
-    <div className="h-screen flex items-center justify-center">
+    <div className="min-h-screen flex items-center justify-center bg-slate-50">
       <form
         onSubmit={onSubmit}
-        className="h-[350px] w-[400px] bg-cyan-200 p-4 rounded-2xl shadow-2xl text-center"
+        className="w-full max-w-sm bg-white p-6 rounded-2xl shadow-2xl"
       >
-        <h1 className="text-center font-semibold">CodeCollab</h1>
-        <div className="  gap-6 ">
-          <input
-            type="text"
-            className="border-b text-center border-b-cyan-600 outline-none px-1 py-2 mt-5"
-            placeholder="name"
-            required
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-          />
+        <h1 className="text-center text-xl font-semibold mb-3">CodeCollab Register</h1>
+        <div className="flex flex-col gap-4 ">
+          <label className="flex flex-col gap-4">
+            Name
+            <input
+              type="text"
+              className="w-full border focus:ring-2 focus:ring-green-400 outline-none  px-4 py-2  rounded-2xl"
+              placeholder="name"
+              required
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+            />
+          </label>
 
-          <input
-            type="email"
-            placeholder="email address"
-            className="border-b text-center border-b-cyan-600 px-1 py-2 outline-none mt-5"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-          />
+          <label className="flex flex-col gap-4">
+            Email
+            <input
+              type="email"
+              placeholder="email address"
+              className="w-full  border focus:ring-2 focus:ring-green-400 px-4 rounded-2xl py-2 outline-none"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+            />
+          </label>
 
-          <input
-            type="password"
-            className="border-b text-center border-b-cyan-600 px-1 py-2 outline-none  mt-5"
-            placeholder="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-          />
+          <label  className="flex flex-col gap-4">
+            Password
+            <input
+              type="password"
+              className="w-full  border focus:ring-2 focus:ring-green-400 px-4 rounded-2xl py-2 outline-none"
+              placeholder="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+            />
+          </label>
         </div>
-        <button className="bg-cyan-600 px-7 py-1 rounded-xl hover:bg-cyan-700 cursor-pointer  mt-7">
+        <div className="mt-3">
+          <p>Already have an account? <Link to="/login" className="text-sky-600 font-semibold">Login</Link></p>
+        </div>
+        <div className="flex justify-center mt-7">
+          <button className="bg-cyan-600 px-7 py-2 text-white rounded-xl hover:bg-cyan-700 cursor-pointer">
           Submit
         </button>
+        </div>
       </form>
     </div>
   );
