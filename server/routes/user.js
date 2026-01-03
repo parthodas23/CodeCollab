@@ -12,7 +12,7 @@ router.post("/login", login);
 
 router.post("/refresh", refresh);
 
-router.get("/", verifyToken, async (req, res) => {
+router.get("/dashboard", verifyToken, async (req, res) => {
   const user = await User.findById(req.userId).select("-password");
   res.json(user);
 });

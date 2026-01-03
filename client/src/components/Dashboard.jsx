@@ -3,6 +3,7 @@ import axios from "axios";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useEffect } from "react";
+import { Link } from "react-router-dom";
 
 const Dashboard = () => {
   const [data, setData] = useState("");
@@ -12,7 +13,7 @@ const Dashboard = () => {
     const token = localStorage.getItem("accessToken");
 
     try {
-      const res = await axios.get("http://localhost:5000/api/", {
+      const res = await axios.get("http://localhost:5000/api/dashboard", {
         headers: { Authorization: `Bearer ${token}` },
         withCredentials: true,
       });
@@ -43,22 +44,32 @@ const Dashboard = () => {
     getData();
   }, []);
 
+  console.log(data);
+
+  const userId = data._id;
   const [popup, setPopup] = useState(false);
   const [projects, setProjects] = useState([]);
   const [projectName, setProjectName] = useState("");
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
 
-    const newProject = {
-      id: Date.now(),
+    const res = await axios.post("http://localhost:5000/api/project/create", {
       name: projectName,
-    };
+      userId,
+    });
 
-    setProjects([...projects, newProject]);
+    setProjects([...projects, res.data]);
     setProjectName("");
     setPopup(false);
   };
+
+  useEffect(() => {
+    if (!userId) return;
+    axios
+      .get(`http://localhost:5000/api/project/all/${userId}`)
+      .then((res) => setProjects(res.data));
+  }, [userId]);
 
   return (
     <div className="relative min-h-screen">
@@ -78,7 +89,12 @@ const Dashboard = () => {
             <h1 className="text-xl font-semibold mb-3">Your Current Project</h1>
             {projects?.map((p) => (
               <div className=" flex flex-row gap-4">
-                <p className="py-3 px-7 bg-slate-400 rounded-xl border-2 border-gray-500 text-slate-100 mb-4">{p.name}</p>
+                <Link
+                  to={`/projects/${p._id}`}
+                  className="py-3 px-7 bg-slate-400 rounded-xl border-2 border-gray-500 text-slate-100 mb-4"
+                >
+                  {p.name}
+                </Link>
               </div>
             ))}
           </div>
@@ -106,7 +122,10 @@ const Dashboard = () => {
               />
             </label>
             <div className="flex justify-center mt-3">
-              <button type="submit" className="px-7 py-2 bg-green-600 text-white rounded-xl hover:bg-green-700 cursor-pointer">
+              <button
+                type="submit"
+                className="px-7 py-2 bg-green-600 text-white rounded-xl hover:bg-green-700 cursor-pointer"
+              >
                 Create Now
               </button>
             </div>
