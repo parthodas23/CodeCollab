@@ -20,8 +20,7 @@ function Login() {
       );
       localStorage.setItem("accessToken", res.data.accessToken);
       alert("Login Successfull");
-      navigate("/");
-
+      navigate("/dashboard");
     } catch (error) {
       console.log(error);
     }

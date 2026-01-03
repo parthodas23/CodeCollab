@@ -4,11 +4,11 @@ import jwt from "jsonwebtoken";
 import { ENV } from "../lib/ENV.js";
 
 const generateAccessToken = (user) => {
-  return jwt.sign({ id: user._id }, ENV.ACCESS_SECRET, { expiresIn: "15s" });
+  return jwt.sign({ id: user._id }, ENV.ACCESS_SECRET, { expiresIn: "15m" });
 };
 
 const generateRefreshToken = (user) => {
-  return jwt.sign({ id: user._id }, ENV.REFRESH_SECRET, { expiresIn: "30s" });
+  return jwt.sign({ id: user._id }, ENV.REFRESH_SECRET, { expiresIn: "30d" });
 };
 
 export const register = async (req, res) => {
@@ -59,13 +59,11 @@ export const login = async (req, res) => {
 export const refresh = async (req, res) => {
   try {
     const refreshToken = req.cookies.refreshToken;
-    if (!refreshToken) return res.sendStatus(401);
-
     const user = await User.findOne({ refreshToken });
-    if (!user) return res.sendStatus(401);
+    if (!user) return res.status(401).json("User doesn't exist.");
 
     jwt.verify(refreshToken, ENV.REFRESH_SECRET, (err, decodedUser) => {
-      if (err) return res.sendStatus(401);
+      if (err) return res.status(501).json(err);
 
       const newAccessToken = generateAccessToken(user);
 
