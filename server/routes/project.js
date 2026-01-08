@@ -48,4 +48,16 @@ router.post("/messages", async (req, res) => {
     res.status(500).json({ messages: "Server Error", error });
   }
 });
+
+router.get("/messages/:projectId", async (req, res) => {
+  try {
+    const { projectId } = req.params;
+    const response = await Project.findById(projectId);
+
+    res.status(200).json(response);
+  } catch (error) {
+    return res.status(500).json(error);
+  }
+});
+
 export default router;
