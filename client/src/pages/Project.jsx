@@ -4,12 +4,14 @@ import { useEffect } from "react";
 import { useState } from "react";
 import { useParams } from "react-router-dom";
 import { IoSend } from "react-icons/io5";
+import CodeEditor from "../components/CodeEditor";
 
 function Project() {
   const { projectId } = useParams();
   const [data, setData] = useState(null);
   const [chat, setChat] = useState(null);
-  const [text, setText] = useState(null);
+  const [text, setText] = useState("");
+
   const setMessages = async () => {
     try {
       const res = await axios.post(
@@ -18,11 +20,12 @@ function Project() {
       );
       console.log(res.data);
       setChat(res.data);
+      setText("");
     } catch (error) {
       console.log(error);
     }
   };
-  console.log(chat);
+
   useEffect(() => {
     if (!projectId) return;
     axios
@@ -30,48 +33,132 @@ function Project() {
       .then((res) => setData(res.data));
   }, [projectId]);
 
-  useEffect(() => {});
+  useEffect(() => {
+    if (!projectId) return;
+    axios
+      .get(`http://localhost:5000/api/project/messages/${projectId}`)
+      .then((res) => setChat(res.data));
+  }, [projectId]);
 
+  console.log(chat);
   return (
-    <div className="min-h-screen bg-slate-50 flex flex-col">
-      <header className="p-2 border-b bg-white">
-        <h1 className="text-center text-2xl font-semibold">
-          Project Name:{" "}
-          <span className="text-green-500 font-extralight">{data?.name}</span>
-        </h1>
-      </header>
-      <main className="flex-1 grid grid-cols-2 gap-4">
-        <div className="bg-gray-300  grid grid-cols-3">
-          <div className="bg-gray-400 p-1 col-span-2 flex flex-col h-full">
-            <h1 className="text-xl text-center">Messages</h1>
-            <div className="flex-1 overflow-y-auto bg-gray-300 rounded-xl p-2">
-              <h1>Hi</h1>
-              <h2>How are you?</h2>
-            </div>
-            <div className="flex mb-4 mt-2">
-              <textarea
-                type="text"
-                placeholder="write messages"
-                rows={1}
-                value={text}
-                onChange={(e) => setText(e.target.value)}
-                className="flex-1 outline-none py-4 px-4 bg-gray-500 text-white rounded-xl mr-3 resize-none"
-              />
-              <IoSend
-                onClick={() => setMessages()}
-                className="mt-2 text-3xl cursor-pointer"
-              />
-            </div>
+    <div className="h-screen flex flex-col">
+      {/* header */}
+
+      <div className="bg-gray-800 text-white flex items-center px-4 h-14">
+        {data?.name}
+      </div>
+
+      {/* main */}
+
+      <div className="flex-1 min-h-0 flex">
+        {/* messages */}
+        <div className="w-96 bg-gray-100 flex flex-col border-r">
+          <div className="h-12 flex items-center border-b font-semibold px-4 ">
+            Messages
           </div>
-          <div className="bg-gray-700 p-2 col-span-1">
-            <h1 className="text-xl text-white ml-2">{data?.name}</h1>
+
+          <div className="flex-1 min-h-0 overflow-y-auto p-3 space-y-3">
+            {chat?.messages.map((m) => (
+              <div
+                key={m._id}
+                className="bg-white rounded-xl p-3 shadow wrap-break-word"
+              >
+                {m.text}
+              </div>
+            ))}
+          </div>
+
+          <div className="h-14 border-t flex">
+            <input
+              className="flex-1 outline-none px-3"
+              type="text"
+              placeholder="write messages...."
+              value={text}
+              onChange={(e) => setText(e.target.value)}
+            />
+            <IoSend
+              onClick={() => setMessages()}
+              className="text-3xl m-3 cursor-pointer hover:text-green-500"
+            />
           </div>
         </div>
-        <div className="bg-white">
-          <p className="text-center">Run Code</p>
+
+        {/* fileStructure */}
+        <div className="w-64 bg-gray-200 flex flex-col border-r">
+          <p className="h-12 px-3 font-semibold border-b flex items-center">
+            Files
+          </p>
+          <div className="flex-1 min-h-0 overflow-y-auto p-3">
+            {" "}
+            {[...Array(60)].map((_, i) => (
+              <div className="py-1" key={i}>file_{i}.js</div>
+            ))}
+          </div>
         </div>
-      </main>
+
+        {/* codeEditor */}
+        <div></div>
+      </div>
     </div>
+    // <div className="h-screen flex flex-col">
+
+    //   <header className="h-14 bg-gray-800 text-white flex items-center px-4">
+    //     {data?.name}
+    //   </header>
+
+    //   {/* MAIN AREA */}
+
+    //   <div className="flex-1 min-h-0 flex">
+
+    //     {/* MESSAGES PANEL */}
+
+    //     <div className="w-96 bg-gray-100 border-r flex flex-col">
+    //       {/* messages header */}
+    //       <div className="h-12 border-b flex items-center px-3 font-semibold">
+    //         Messages
+    //       </div>
+
+    //       {/* messages list (scrolls) */}
+    //       <div className="flex-1 min-h-0 overflow-y-auto p-3 space-y-3">
+    //         {[...Array(50)].map((_, i) => (
+    //           <div key={i} className="bg-white p-2 rounded shadow">
+    //             Message {i + 1}
+    //           </div>
+    //         ))}
+    //       </div>
+
+    //       {/* input row */}
+    //       <div className="h-14 border-t flex">
+    //         <input
+    //           className="flex-1 px-3 outline-none"
+    //           placeholder="Type message..."
+    //         />
+    //         <button className="px-4 bg-blue-600 text-white">Send</button>
+    //       </div>
+    //     </div>
+
+    //     {/* FILE PANEL */}
+    //     <div className="w-64 bg-gray-200 border-r flex flex-col">
+    //       <div className="h-12 border-b flex items-center px-3 font-semibold">
+    //         Files
+    //       </div>
+
+    //       <div className="flex-1 min-h-0 overflow-y-auto p-3">
+    //         {[...Array(60)].map((_, i) => (
+    //           <div key={i} className="py-1">
+    //             file_{i}.js
+    //           </div>
+    //         ))}
+    //       </div>
+    //     </div>
+
+    //     {/* CODE EDITOR */}
+    //     <div className="flex-1 min-h-0 flex">
+    //       <CodeEditor />
+    //     </div>
+    //   </div>
+    // </div>
   );
 }
 
