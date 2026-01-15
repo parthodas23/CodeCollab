@@ -50,7 +50,7 @@ function Project() {
       </div>
 
       {/* main */}
-
+      {/* flex-1 take the rest of spaces */}
       <div className="flex-1 min-h-0 flex">
         {/* messages */}
         <div className="w-96 bg-gray-100 flex flex-col border-r">
@@ -90,15 +90,18 @@ function Project() {
             Files
           </p>
           <div className="flex-1 min-h-0 overflow-y-auto p-3">
-            {" "}
             {[...Array(60)].map((_, i) => (
-              <div className="py-1" key={i}>file_{i}.js</div>
+              <div className="py-1" key={i}>
+                file_{i}.js
+              </div>
             ))}
           </div>
         </div>
 
         {/* codeEditor */}
-        <div></div>
+        <div className="flex flex-1 min-h-0">
+          <CodeEditor />
+        </div>
       </div>
     </div>
     // <div className="h-screen flex flex-col">

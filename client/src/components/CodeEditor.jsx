@@ -6,7 +6,6 @@ import "prismjs/themes/prism-tomorrow.css";
 function CustomCodeEditor() {
   const [code, setCode] = useState("");
   const [output, setOutput] = useState("");
-  const iframeRef = useRef(null);
   const textareaRef = useRef(null);
 
   const lines = code.split("\n").length;
@@ -22,125 +21,88 @@ function CustomCodeEditor() {
   const handleKeyDown = (e) => {
     if (e.key === "Tab") {
       e.preventDefault();
-
       const textarea = textareaRef.current;
       const start = textarea.selectionStart;
       const end = textarea.selectionEnd;
 
-      const newCode =
-        code.substring(0, start) +
-        "  " +
-        code.substring(end);
+      const newCode = code.substring(0, start) + "  " + code.substring(end);
 
       setCode(newCode);
 
       requestAnimationFrame(() => {
-        textarea.selectionStart = textarea.selectionEnd = start + 2;
+        textareaRef.selectionStart = textareaRef.selectionEnd = start + 2;
       });
     }
   };
 
-  // 🟢 RUN CODE LOGIC
   const runCode = () => {
     setOutput("");
 
-    const html = `
-      <html>
-        <body>
-          <script>
-            const logs = [];
-            const originalLog = console.log;
+    const logs = [];
+    const originalLog = console.log; // this is act like a temp varibile
 
-            console.log = function(...args) {
-              logs.push(args.join(" "));
-              originalLog(...args);
-            };
+    console.log = (...args) => logs.push(args.join(" "));
+    // console.log("Hello")  -->  logs.push("Hello")
 
-            try {
-              ${code}
-              window.parent.postMessage(
-                { type: "log", message: logs.join("\\n") },
-                "*"
-              );
-            } catch (err) {
-              window.parent.postMessage(
-                { type: "error", message: err.message },
-                "*"
-              );
-            }
-          </script>
-        </body>
-      </html>
-    `;
-
-    iframeRef.current.srcdoc = html;
-  };
-
-  // Receive messages from iframe
-  window.onmessage = (e) => {
-    if (e.data.type === "log") {
-      setOutput(e.data.message || "✓ Code ran successfully");
+    try {
+      eval(code); // this evaluates js code and executes it
+      setOutput(logs.join("\n") || "✓ code run successfully");
+    } catch (error) {
+      setOutput("Error: " + error.message);
     }
-    if (e.data.type === "error") {
-      setOutput("Error: " + e.data.message);
-    }
+    console.log = originalLog; // here we used the temp var
   };
 
   return (
     <div className="flex-1 flex flex-col h-full bg-[#2d2d2d] overflow-hidden">
-      
-      {/* 1. TOP: Run Bar (Exactly like Messages Header) */}
+      {/* run bar */}
       <div className="h-12 border-b border-gray-700 flex items-center justify-between px-4 bg-[#1e1e1e] text-white">
         <span className="text-sm font-medium text-gray-400">main.js</span>
-        <button 
+        <button
           onClick={runCode}
-          className="bg-green-600 hover:bg-green-700 text-white px-4 py-1 rounded text-sm transition-colors"
+          className="bg-green-600 hover:bg-green-700 px-4 py-1 rounded text-sm transition-colors"
         >
           Run Code
         </button>
       </div>
 
-      {/* 2. MIDDLE: Scrollable Editor Area */}
+      {/* editor area */}
       <div className="flex-1 min-h-0 relative overflow-y-auto custom-scrollbar">
-        <div className="flex min-h-full">
-          {/* Line Numbers */}
-          <div className="w-12 bg-[#1e1e1e] text-gray-500 text-right pr-3 pt-4 select-none font-mono text-sm">
+        <div className="min-h-full flex">
+          {/* line numbers */}
+          <div className="w-12 bg-[#1e1e1e] text-gray-500 pr-3 pt-4 text-sm font-mono text-right">
             {Array.from({ length: lines }).map((_, i) => (
               <div key={i}>{i + 1}</div>
             ))}
           </div>
-
-          {/* Editor Input/Highlighting */}
+          {/* editor input area */}
           <div className="relative flex-1">
             <textarea
+              className="absolute inset-0 w-full h-full resize-none outline-none bg-transparent caret-white text-transparent p-4 font-mono text-sm z-10"
               ref={textareaRef}
               value={code}
               onChange={(e) => setCode(e.target.value)}
-              onKeyDown={handleKeyDown}
               spellCheck="false"
-              className="absolute inset-0 w-full h-full bg-transparent text-transparent caret-white p-4 font-mono text-sm outline-none resize-none z-10"
+              onKeyDown={handleKeyDown}
             />
             <pre
               aria-hidden="true"
-              className="m-0 p-4 font-mono text-sm pointer-events-none whitespace-pre-wrap break-words"
+              className="m-0 p-4 font-mono text-sm pointer-events-none whitespace-pre-wrap wrap-break-word text-gray-100"
               dangerouslySetInnerHTML={{ __html: highlightedCode + "\n" }}
             />
           </div>
         </div>
       </div>
+      {/* fixed output */}
 
-      {/* 3. BOTTOM: Fixed Output (Exactly like Message Input Row) */}
-      <div className="h-32 border-t border-gray-700 bg-[#1e1e1e] flex flex-col">
-        <div className="px-3 py-1 text-xs font-bold text-gray-500 uppercase border-b border-gray-800">
+      <div className="h-34 border-t border-gray-700 bg-[#1e1e1e] flex flex-col">
+        <div className="px-3 py-1 text-xs text-gray-500 font-bold uppercase border-b border-gray-800">
           Output
         </div>
-        <div className="flex-1 p-3 overflow-y-auto font-mono text-sm text-green-400">
-          {output || <span className="text-gray-600">// Execution results will appear here</span>}
+        <div className="flex-1 p-3 text-green-500 font-mono text-sm overflow-y-auto whitespace-pre-wrap">
+          {output || <span> Exicution will be appear here </span>}
         </div>
       </div>
-
-      {/* Hidden Iframe for execution */}
-      <iframe ref={iframeRef} title="output" className="hidden" />
     </div>
   );
 }
