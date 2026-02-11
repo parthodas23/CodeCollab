@@ -1,5 +1,6 @@
 import { Router } from "express";
 import Project from "../model/Project.js";
+import Message from "../model/Message.js";
 const router = Router();
 
 router.post("/create", async (req, res) => {
@@ -31,30 +32,11 @@ router.get("/data/:projectId", async (req, res) => {
   }
 });
 
-router.post("/messages", async (req, res) => {
-  try {
-    const { projectId, text } = req.body;
-    const updatedDocument = await Project.findByIdAndUpdate(
-      projectId,
-      {
-        $push: {
-          messages: { text },
-        },
-      },
-      { new: true }
-    );
-    res.status(200).json(updatedDocument);
-  } catch (error) {
-    res.status(500).json({ messages: "Server Error", error });
-  }
-});
-
 router.get("/messages/:projectId", async (req, res) => {
   try {
     const { projectId } = req.params;
-    const response = await Project.findById(projectId);
-
-    res.status(200).json(response);
+    const messages = await Message.find({ projectId }).sort({ createdAt: 1 });
+    res.json(messages);
   } catch (error) {
     return res.status(500).json(error);
   }

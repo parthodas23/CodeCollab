@@ -5,6 +5,7 @@ import { useState } from "react";
 import { useParams } from "react-router-dom";
 import { IoSend } from "react-icons/io5";
 import CodeEditor from "../components/CodeEditor";
+import { io } from "socket.io-client";
 
 function Project() {
   const { projectId } = useParams();
@@ -12,11 +13,12 @@ function Project() {
   const [chat, setChat] = useState(null);
   const [text, setText] = useState("");
 
+  const socket = io("http://localhost:5000");
   const setMessages = async () => {
     try {
       const res = await axios.post(
         "http://localhost:5000/api/project/messages",
-        { projectId, text }
+        { projectId, text },
       );
       console.log(res.data);
       setChat(res.data);
@@ -104,64 +106,6 @@ function Project() {
         </div>
       </div>
     </div>
-    // <div className="h-screen flex flex-col">
-
-    //   <header className="h-14 bg-gray-800 text-white flex items-center px-4">
-    //     {data?.name}
-    //   </header>
-
-    //   {/* MAIN AREA */}
-
-    //   <div className="flex-1 min-h-0 flex">
-
-    //     {/* MESSAGES PANEL */}
-
-    //     <div className="w-96 bg-gray-100 border-r flex flex-col">
-    //       {/* messages header */}
-    //       <div className="h-12 border-b flex items-center px-3 font-semibold">
-    //         Messages
-    //       </div>
-
-    //       {/* messages list (scrolls) */}
-    //       <div className="flex-1 min-h-0 overflow-y-auto p-3 space-y-3">
-    //         {[...Array(50)].map((_, i) => (
-    //           <div key={i} className="bg-white p-2 rounded shadow">
-    //             Message {i + 1}
-    //           </div>
-    //         ))}
-    //       </div>
-
-    //       {/* input row */}
-    //       <div className="h-14 border-t flex">
-    //         <input
-    //           className="flex-1 px-3 outline-none"
-    //           placeholder="Type message..."
-    //         />
-    //         <button className="px-4 bg-blue-600 text-white">Send</button>
-    //       </div>
-    //     </div>
-
-    //     {/* FILE PANEL */}
-    //     <div className="w-64 bg-gray-200 border-r flex flex-col">
-    //       <div className="h-12 border-b flex items-center px-3 font-semibold">
-    //         Files
-    //       </div>
-
-    //       <div className="flex-1 min-h-0 overflow-y-auto p-3">
-    //         {[...Array(60)].map((_, i) => (
-    //           <div key={i} className="py-1">
-    //             file_{i}.js
-    //           </div>
-    //         ))}
-    //       </div>
-    //     </div>
-
-    //     {/* CODE EDITOR */}
-    //     <div className="flex-1 min-h-0 flex">
-    //       <CodeEditor />
-    //     </div>
-    //   </div>
-    // </div>
   );
 }
 
