@@ -3,7 +3,8 @@ import mongoose from "mongoose";
 const messageSchema = mongoose.Schema(
   {
     projectId: { type: String, required: true },
-    sender: { type: String },
+    userName: { type: String },
+    userId: { type: String },
     text: { type: String, required: true },
   },
   { timeStamp: true },

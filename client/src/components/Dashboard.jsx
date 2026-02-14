@@ -4,49 +4,24 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useEffect } from "react";
 import { Link } from "react-router-dom";
+import { getUserData } from "../data/getUserData";
 
 const Dashboard = () => {
   const [data, setData] = useState("");
   const navigate = useNavigate();
 
-  const getData = async () => {
-    const token = localStorage.getItem("accessToken");
-
-    try {
-      const res = await axios.get("http://localhost:5000/api/dashboard", {
-        headers: { Authorization: `Bearer ${token}` },
-        withCredentials: true,
-      });
-      setData(res.data);
-    } catch (error) {
-      if (error.response?.status === 401) {
-        try {
-          const refreshRes = await axios.post(
-            "http://localhost:5000/api/refresh",
-            {},
-            { withCredentials: true }
-          );
-
-          const newToken = refreshRes.data.accessToken;
-          localStorage.setItem("accessToken", newToken);
-
-          return getData();
-        } catch (refreshError) {
-          if (refreshError.response?.status === 401) {
-            localStorage.removeItem("accessToken");
-            navigate("/login");
-          }
-        }
-      }
-    }
-  };
   useEffect(() => {
-    getData();
+    const fetchUserData = async () => {
+      const user = await getUserData(navigate);
+      setData(user);
+    };
+
+    fetchUserData();
   }, []);
 
-  console.log(data);
 
-  const userId = data._id;
+
+  const userId = data?._id;
   const [popup, setPopup] = useState(false);
   const [projects, setProjects] = useState([]);
   const [projectName, setProjectName] = useState("");
@@ -75,7 +50,7 @@ const Dashboard = () => {
     <div className="relative min-h-screen">
       {popup && <div className="fixed inset-0 bg-black/60 z-40"></div>}
       <h1 className="mt-5 text-2xl text-center font-light">
-        Wellcome {data.name}
+        Wellcome {data?.name}
       </h1>
       <div>
         <button

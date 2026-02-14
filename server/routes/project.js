@@ -1,6 +1,7 @@
 import { Router } from "express";
 import Project from "../model/Project.js";
 import Message from "../model/Message.js";
+
 const router = Router();
 
 router.post("/create", async (req, res) => {
@@ -36,10 +37,14 @@ router.get("/messages/:projectId", async (req, res) => {
   try {
     const { projectId } = req.params;
     const messages = await Message.find({ projectId }).sort({ createdAt: 1 });
+
+    
     res.json(messages);
   } catch (error) {
     return res.status(500).json(error);
   }
+
+
 });
 
 export default router;
