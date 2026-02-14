@@ -2,30 +2,68 @@ import axios from "axios";
 import React from "react";
 import { useEffect } from "react";
 import { useState } from "react";
-import { useParams } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import { IoSend } from "react-icons/io5";
 import CodeEditor from "../components/CodeEditor";
 import { io } from "socket.io-client";
+import { getUserData } from "../data/getUserData";
+import { useRef } from "react";
 
 function Project() {
   const { projectId } = useParams();
   const [data, setData] = useState(null);
-  const [chat, setChat] = useState(null);
+  const [chat, setChat] = useState([]);
   const [text, setText] = useState("");
+  const navigate = useNavigate();
 
-  const socket = io("http://localhost:5000");
-  const setMessages = async () => {
-    try {
-      const res = await axios.post(
-        "http://localhost:5000/api/project/messages",
-        { projectId, text },
-      );
-      console.log(res.data);
-      setChat(res.data);
-      setText("");
-    } catch (error) {
-      console.log(error);
-    }
+  const socketRef = useRef(null);
+
+  useEffect(() => {
+    socketRef.current = io("http://localhost:5000", {
+      withCredentials: true,
+    });
+
+    return () => {
+      socketRef.current.disconnect();
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!projectId) return;
+    socketRef.current.emit("join-project", projectId);
+  }, [projectId]);
+
+  useEffect(() => {
+    socketRef.current.on("recive-message", (newMessage) => {
+      setChat((prev) => [...prev, newMessage]);
+    });
+
+    return () => {
+      socketRef.current.off("recive-message");
+    };
+  }, []);
+
+  useEffect(() => {
+    const fetchUserData = async () => {
+      const user = await getUserData(navigate);
+      setData(user);
+    };
+
+    fetchUserData();
+  }, []);
+
+  const sendMessage = () => {
+    if (!text.trim()) return;
+
+    const userName = data?.name;
+    const userId = data?._id;
+    socketRef.current.emit("send-message", {
+      projectId,
+      userName,
+      userId,
+      text,
+    });
+    setText("");
   };
 
   useEffect(() => {
@@ -42,16 +80,12 @@ function Project() {
       .then((res) => setChat(res.data));
   }, [projectId]);
 
-  console.log(chat);
   return (
     <div className="h-screen flex flex-col">
-      {/* header */}
-
       <div className="bg-gray-800 text-white flex items-center px-4 h-14">
         {data?.name}
       </div>
 
-      {/* main */}
       {/* flex-1 take the rest of spaces */}
       <div className="flex-1 min-h-0 flex">
         {/* messages */}
@@ -61,12 +95,16 @@ function Project() {
           </div>
 
           <div className="flex-1 min-h-0 overflow-y-auto p-3 space-y-3">
-            {chat?.messages.map((m) => (
+            {chat?.map((m) => (
               <div
                 key={m._id}
-                className="bg-white rounded-xl p-3 shadow wrap-break-word"
+                className="bg-white rounded-xl p-3 shadow break-words"
               >
-                {m.text}
+                <p className="text-sm text-gray-600 font-semibold">
+                  {m.userName}
+                </p>
+
+                <p className="mt-1 text-gray-800">{m.text}</p>
               </div>
             ))}
           </div>
@@ -80,13 +118,12 @@ function Project() {
               onChange={(e) => setText(e.target.value)}
             />
             <IoSend
-              onClick={() => setMessages()}
+              onClick={() => sendMessage()}
               className="text-3xl m-3 cursor-pointer hover:text-green-500"
             />
           </div>
         </div>
 
-        {/* fileStructure */}
         <div className="w-64 bg-gray-200 flex flex-col border-r">
           <p className="h-12 px-3 font-semibold border-b flex items-center">
             Files
