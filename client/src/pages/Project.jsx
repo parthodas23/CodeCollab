@@ -14,6 +14,7 @@ function Project() {
   const [data, setData] = useState(null);
   const [chat, setChat] = useState([]);
   const [text, setText] = useState("");
+  const [userData, setUserData] = useState(null);
   const navigate = useNavigate();
 
   const socketRef = useRef(null);
@@ -46,7 +47,7 @@ function Project() {
   useEffect(() => {
     const fetchUserData = async () => {
       const user = await getUserData(navigate);
-      setData(user);
+      setUserData(user);
     };
 
     fetchUserData();
@@ -55,8 +56,8 @@ function Project() {
   const sendMessage = () => {
     if (!text.trim()) return;
 
-    const userName = data?.name;
-    const userId = data?._id;
+    const userName = userData?.name;
+    const userId = userData?._id;
     socketRef.current.emit("send-message", {
       projectId,
       userName,

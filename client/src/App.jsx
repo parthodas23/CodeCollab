@@ -1,10 +1,10 @@
 import React from "react";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 
-import Register from "./components/Register";
-import Login from "./components/Login";
+import Register from "./pages/Register";
+import Login from "./pages/Login";
 import ProtectedRoute from "./ProtectedRoute";
-import Dashboard from "./components/Dashboard";
+import Dashboard from "./pages/Dashboard";
 import Project from "./pages/Project";
 
 function App() {
@@ -12,7 +12,7 @@ function App() {
     <BrowserRouter>
       <Routes>
         <Route
-          path="/dashboard"
+          path="/"
           element={
             <ProtectedRoute>
               <Dashboard />
