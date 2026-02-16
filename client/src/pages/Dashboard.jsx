@@ -12,6 +12,11 @@ const Dashboard = () => {
   const navigate = useNavigate();
   const [inviteModal, setInviteModal] = useState(false);
   const [inviteLink, setInviteLink] = useState("");
+  const userId = data?._id;
+  const [popup, setPopup] = useState(false);
+  const [projects, setProjects] = useState([]);
+  const [projectName, setProjectName] = useState("");
+  let [copied, setCopied] = useState(false);
 
   useEffect(() => {
     const fetchUserData = async () => {
@@ -21,11 +26,6 @@ const Dashboard = () => {
 
     fetchUserData();
   }, []);
-
-  const userId = data?._id;
-  const [popup, setPopup] = useState(false);
-  const [projects, setProjects] = useState([]);
-  const [projectName, setProjectName] = useState("");
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -129,9 +129,13 @@ const Dashboard = () => {
                 className="bg-indigo-600 text-white py-2 px-4 rounded-xl cursor-pointer hover:bg-indigo-700 transition"
                 onClick={() => {
                   navigator.clipboard.writeText(inviteLink);
+                  setCopied(true);
+                  setTimeout(() => {
+                    setCopied(false);
+                  }, 2000);
                 }}
               >
-                Copy Link
+                {copied ? "Copied" : "Copy Link"}
               </button>
             </div>
 

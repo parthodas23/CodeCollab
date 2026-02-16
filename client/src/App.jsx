@@ -6,6 +6,7 @@ import Login from "./pages/Login";
 import ProtectedRoute from "./ProtectedRoute";
 import Dashboard from "./pages/Dashboard";
 import Project from "./pages/Project";
+import Invite from "./pages/Invite";
 
 function App() {
   return (
@@ -29,6 +30,7 @@ function App() {
         />
         <Route path="/register" element={<Register />} />
         <Route path="/login" element={<Login />} />
+        <Route path="/invite/:token" element={<Invite />} />
       </Routes>
     </BrowserRouter>
   );
