@@ -113,4 +113,38 @@ router.post("/invite-join/:token", verifyToken, async (req, res) => {
   }
 });
 
+router.put("/file/:projectId", async (req, res) => {
+  const { projectId } = req.params;
+  const { fileName, content } = req.body;
+
+  try {
+    const project = await Project.findById(projectId);
+    if (!project) return res.status(404).json({ message: "Project not found" });
+
+    const file = project.files.find((f) => f.name === fileName);
+    if (file) {
+      file.content = content;
+    } else {
+      project.files.push({ name: fileName, content });
+    }
+
+    await project.save();
+
+    res.status(201).json({ message: "File saved successfully." });
+  } catch (error) {
+    res.status(500).json({ message: "Error saving file." });
+  }
+});
+
+router.get("/files/:projectId", async (req, res) => {
+  try {
+    const { projectId } = req.params;
+    const project = await Project.findById(projectId);
+
+    res.json(project.files);
+  } catch (error) {
+    res.status(500).json(error);
+  }
+});
+
 export default router;

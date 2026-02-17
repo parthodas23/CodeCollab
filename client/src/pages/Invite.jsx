@@ -29,6 +29,7 @@ function Invite() {
 
     fetchData();
   }, []);
+  
   console.log(project);
 
   const handleJoin = async () => {
