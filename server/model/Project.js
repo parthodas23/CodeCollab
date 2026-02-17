@@ -1,9 +1,14 @@
 import mongoose from "mongoose";
 
-const projectSchema = mongoose.Schema({
+const fileSchema = new mongoose.Schema({
+  name: { type: String },
+  content: { type: String, default: "" },
+});
+
+const projectSchema = new mongoose.Schema({
   name: { type: String },
   userId: { type: String, required: true }, // owner
-  code: { type: String, default: "" },
+  files: [fileSchema],
   members: [{ type: String }],
   inviteToken: String,
   inviteExpires: Date,

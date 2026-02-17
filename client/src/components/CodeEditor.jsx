@@ -3,18 +3,17 @@ import Prism from "prismjs";
 import "prismjs/components/prism-javascript";
 import "prismjs/themes/prism-tomorrow.css";
 
-function CustomCodeEditor() {
-  const [code, setCode] = useState("");
+function CustomCodeEditor({ code, setCode, fileName }) {
   const [output, setOutput] = useState("");
   const textareaRef = useRef(null);
 
-  const lines = code.split("\n").length;
+  const lines = code ? code.split("\n").length : 1;
 
   // Highlight JS code
   const highlightedCode = Prism.highlight(
     code,
     Prism.languages.javascript,
-    "javascript"
+    "javascript",
   );
 
   // TAB support
@@ -57,7 +56,7 @@ function CustomCodeEditor() {
     <div className="flex-1 flex flex-col h-full bg-[#2d2d2d] overflow-hidden">
       {/* run bar */}
       <div className="h-12 border-b border-gray-700 flex items-center justify-between px-4 bg-[#1e1e1e] text-white">
-        <span className="text-sm font-medium text-gray-400">main.js</span>
+        <span className="text-sm font-medium text-gray-400">{fileName}</span>
         <button
           onClick={runCode}
           className="bg-green-600 hover:bg-green-700 px-4 py-1 rounded text-sm transition-colors"

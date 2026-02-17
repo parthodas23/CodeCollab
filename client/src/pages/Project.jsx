@@ -8,6 +8,7 @@ import CodeEditor from "../components/CodeEditor";
 import { io } from "socket.io-client";
 import { getUserData } from "../data/getUserData";
 import { useRef } from "react";
+import { debounce } from "lodash";
 
 function Project() {
   const { projectId } = useParams();
@@ -16,8 +17,45 @@ function Project() {
   const [text, setText] = useState("");
   const [userData, setUserData] = useState(null);
   const navigate = useNavigate();
-
   const socketRef = useRef(null);
+  const [files, setFiles] = useState({
+    "main.js": "console.log('Hello Wrold')",
+  });
+  const [activeFile, setActiveFile] = useState("main.js");
+
+  const saveFileToDB = async (fileName, content) => {
+    try {
+      await axios.put(`http://localhost:5000/api/project/file/${projectId}`, {
+        fileName,
+        content,
+      });
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
+  const debounceRef = useRef(
+    debounce((fileName, content) => saveFileToDB(fileName, content), 500),
+  );
+
+  useEffect(() => {
+    if (!projectId) return;
+
+    axios
+      .get(`http://localhost:5000/api/project/files/${projectId}`)
+      .then((res) => {
+        const fileObject = {};
+        res.data?.forEach((file) => {
+          fileObject[file.name] = file.content;
+        });
+
+        setFiles(fileObject);
+
+        if (res.data?.length > 0) {
+          setActiveFile(res.data[0].name);
+        }
+      });
+  }, [projectId]);
 
   useEffect(() => {
     socketRef.current = io("http://localhost:5000", {
@@ -52,6 +90,18 @@ function Project() {
 
     fetchUserData();
   }, []);
+
+  const createFile = () => {
+    const fileName = prompt("Enter JavaScript file name:");
+    if (!fileName) return;
+
+    if (files[fileName]) {
+      alert("File already Exists.");
+      return;
+    }
+
+    setFiles({ ...files, [fileName]: "" });
+  };
 
   const sendMessage = () => {
     if (!text.trim()) return;
@@ -130,9 +180,20 @@ function Project() {
             Files
           </p>
           <div className="flex-1 min-h-0 overflow-y-auto p-3">
-            {[...Array(60)].map((_, i) => (
-              <div className="py-1" key={i}>
-                file_{i}.js
+            <button
+              onClick={createFile}
+              className="mb-2 bg-blue-500 px-2 py-1 text-sm rounded cursor-pointer hover:bg-blue-600"
+            >
+              + New File
+            </button>
+
+            {Object.keys(files).map((fileName) => (
+              <div
+                key={fileName}
+                onClick={() => setActiveFile(fileName)}
+                className={`cursor-pointer py-1 px-2 rounded ${activeFile === fileName ? "bg-gray-400" : ""}`}
+              >
+                {fileName}
               </div>
             ))}
           </div>
@@ -140,7 +201,17 @@ function Project() {
 
         {/* codeEditor */}
         <div className="flex flex-1 min-h-0">
-          <CodeEditor />
+          <CodeEditor
+            code={files[activeFile] || ""}
+            setCode={(newCode) => {
+              setFiles((prev) => ({
+                ...prev,
+                [activeFile]: newCode,
+              }));
+              debounceRef.current(activeFile, newCode);
+            }}
+            fileName={activeFile}
+          />
         </div>
       </div>
     </div>
