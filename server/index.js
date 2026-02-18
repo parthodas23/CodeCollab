@@ -12,7 +12,10 @@ const app = express();
 const server = http.createServer(app);
 
 app.use(express.json());
-const allowedOrigins = ["http://localhost:5173"];
+const allowedOrigins = [
+  "http://localhost:5173",
+  "https://code-collab-delta-umber.vercel.app",
+];
 
 app.use(
   cors({
