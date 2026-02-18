@@ -30,7 +30,7 @@ const Dashboard = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    const res = await axios.post("http://localhost:5000/api/project/create", {
+    const res = await axios.post(`${import.meta.env.VITE_API_URL}/api/project/create`, {
       name: projectName,
       userId,
     });
@@ -43,7 +43,7 @@ const Dashboard = () => {
   useEffect(() => {
     if (!userId) return;
     axios
-      .get(`http://localhost:5000/api/project/all/${userId}`)
+      .get(`${import.meta.env.VITE_API_URL}/api/project/all/${userId}`)
       .then((res) => setProjects(res.data));
   }, [userId]);
 
@@ -93,7 +93,7 @@ const Dashboard = () => {
 
                     try {
                       const res = await axios.post(
-                        `http://localhost:5000/api/project/invite-link/${project._id}`,
+                        `${import.meta.env.VITE_API_URL}/api/project/invite-link/${project._id}`,
                         { userId },
                       );
 

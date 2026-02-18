@@ -25,10 +25,13 @@ function Project() {
 
   const saveFileToDB = async (fileName, content) => {
     try {
-      await axios.put(`http://localhost:5000/api/project/file/${projectId}`, {
-        fileName,
-        content,
-      });
+      await axios.put(
+        `${import.meta.env.VITE_API_URL}/api/project/file/${projectId}`,
+        {
+          fileName,
+          content,
+        },
+      );
     } catch (error) {
       console.log(error);
     }
@@ -42,7 +45,7 @@ function Project() {
     if (!projectId) return;
 
     axios
-      .get(`http://localhost:5000/api/project/files/${projectId}`)
+      .get(`${import.meta.env.VITE_API_URL}/api/project/files/${projectId}`)
       .then((res) => {
         const fileObject = {};
         res.data?.forEach((file) => {
@@ -58,7 +61,7 @@ function Project() {
   }, [projectId]);
 
   useEffect(() => {
-    socketRef.current = io("http://localhost:5000", {
+    socketRef.current = io(`${import.meta.env.VITE_API_URL}`, {
       withCredentials: true,
     });
 
@@ -120,14 +123,14 @@ function Project() {
   useEffect(() => {
     if (!projectId) return;
     axios
-      .get(`http://localhost:5000/api/project/data/${projectId}`)
+      .get(`${import.meta.env.VITE_API_URL}/api/project/data/${projectId}`)
       .then((res) => setData(res.data));
   }, [projectId]);
 
   useEffect(() => {
     if (!projectId) return;
     axios
-      .get(`http://localhost:5000/api/project/messages/${projectId}`)
+      .get(`${import.meta.env.VITE_API_URL}/api/project/messages/${projectId}`)
       .then((res) => setChat(res.data));
   }, [projectId]);
 

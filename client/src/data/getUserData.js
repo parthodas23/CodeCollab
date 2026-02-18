@@ -4,7 +4,7 @@ export const getUserData = async (navigate) => {
   const accessToken = localStorage.getItem("accessToken");
 
   try {
-    const res = await axios.get("http://localhost:5000/api/user", {
+    const res = await axios.get(`${import.meta.env.VITE_API_URL}/api/user`, {
       headers: { Authorization: `Bearer ${accessToken}` },
       withCredentials: true,
     });
@@ -14,7 +14,7 @@ export const getUserData = async (navigate) => {
     if (error.response?.status === 401) {
       try {
         const refreshRes = await axios.post(
-          "http://localhost:5000/api/refresh",
+          `${import.meta.env.VITE_API_URL}/api/refresh`,
           {},
           {
             withCredentials: true,

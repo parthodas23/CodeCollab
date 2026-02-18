@@ -11,12 +11,26 @@ import socketHandler from "./socket/socketHandler.js";
 const app = express();
 const server = http.createServer(app);
 
+app.use(express.json());
+const allowedOrigins = ["http://localhost:5173"];
+
 app.use(
   cors({
-    origin: "http://localhost:5173",
+    origin: function (origin, callback) {
+      if (!origin) return callback(null, true);
+
+      if (allowedOrigins.includes(origin)) {
+        callback(null, true);
+      } else {
+        callback(new Error("Not allowed by CORS"));
+      }
+    },
     credentials: true,
   }),
 );
+
+connectDB();
+app.use(cookieParser());
 
 const io = new Server(server, {
   cors: {
@@ -29,15 +43,11 @@ app.set("io", io);
 
 socketHandler(io);
 
-app.use(express.json());
-
-connectDB();
-
-app.use(cookieParser());
-
 app.use("/api", userRoute);
 app.use("/api/project", projectRoute);
-
+app.get("/health", (req, res) => {
+  res.json({ status: "ok" });
+});
 server.listen(ENV.PORT || 5000, () => {
   console.log("Server running on the port", ENV.PORT);
 });
