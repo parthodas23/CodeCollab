@@ -30,10 +30,14 @@ const Dashboard = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    const res = await axios.post(`${import.meta.env.VITE_API_URL}/api/project/create`, {
-      name: projectName,
-      userId,
-    });
+    const res = await axios.post(
+      `${import.meta.env.VITE_API_URL}/api/project/create`,
+      {
+        name: projectName,
+        userId,
+      },
+      { withCredentials: true },
+    );
 
     setProjects([...projects, res.data]);
     setProjectName("");
@@ -43,7 +47,9 @@ const Dashboard = () => {
   useEffect(() => {
     if (!userId) return;
     axios
-      .get(`${import.meta.env.VITE_API_URL}/api/project/all/${userId}`)
+      .get(`${import.meta.env.VITE_API_URL}/api/project/all/${userId}`, {
+        withCredentials: true,
+      })
       .then((res) => setProjects(res.data));
   }, [userId]);
 

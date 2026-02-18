@@ -31,6 +31,7 @@ function Project() {
           fileName,
           content,
         },
+        { withCredentials: treu },
       );
     } catch (error) {
       console.log(error);
@@ -45,7 +46,9 @@ function Project() {
     if (!projectId) return;
 
     axios
-      .get(`${import.meta.env.VITE_API_URL}/api/project/files/${projectId}`)
+      .get(`${import.meta.env.VITE_API_URL}/api/project/files/${projectId}`, {
+        withCredentials: true,
+      })
       .then((res) => {
         const fileObject = {};
         res.data?.forEach((file) => {
@@ -123,14 +126,19 @@ function Project() {
   useEffect(() => {
     if (!projectId) return;
     axios
-      .get(`${import.meta.env.VITE_API_URL}/api/project/data/${projectId}`)
+      .get(`${import.meta.env.VITE_API_URL}/api/project/data/${projectId}`, {
+        withCredentials: true,
+      })
       .then((res) => setData(res.data));
   }, [projectId]);
 
   useEffect(() => {
     if (!projectId) return;
     axios
-      .get(`${import.meta.env.VITE_API_URL}/api/project/messages/${projectId}`)
+      .get(
+        `${import.meta.env.VITE_API_URL}/api/project/messages/${projectId}`,
+        { withCredentials: true },
+      )
       .then((res) => setChat(res.data));
   }, [projectId]);
 

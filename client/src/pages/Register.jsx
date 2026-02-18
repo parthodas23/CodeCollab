@@ -12,11 +12,15 @@ function Register() {
     e.preventDefault();
 
     try {
-      await axios.post(`${import.meta.env.VITE_API_URL}/api/register`, {
-        name,
-        email,
-        password,
-      });
+      await axios.post(
+        `${import.meta.env.VITE_API_URL}/api/register`,
+        {
+          name,
+          email,
+          password,
+        },
+        { withCredentials: true },
+      );
       navigate("/login");
     } catch (error) {
       console.log(error);
@@ -29,7 +33,9 @@ function Register() {
         onSubmit={onSubmit}
         className="w-full max-w-sm bg-white p-6 rounded-2xl shadow-2xl"
       >
-        <h1 className="text-center text-xl font-semibold mb-3">CodeCollab Register</h1>
+        <h1 className="text-center text-xl font-semibold mb-3">
+          CodeCollab Register
+        </h1>
         <div className="flex flex-col gap-4 ">
           <label className="flex flex-col gap-4">
             Name
@@ -54,7 +60,7 @@ function Register() {
             />
           </label>
 
-          <label  className="flex flex-col gap-4">
+          <label className="flex flex-col gap-4">
             Password
             <input
               type="password"
@@ -66,12 +72,17 @@ function Register() {
           </label>
         </div>
         <div className="mt-3">
-          <p>Already have an account? <Link to="/login" className="text-sky-600 font-semibold">Login</Link></p>
+          <p>
+            Already have an account?{" "}
+            <Link to="/login" className="text-sky-600 font-semibold">
+              Login
+            </Link>
+          </p>
         </div>
         <div className="flex justify-center mt-7">
           <button className="bg-cyan-600 px-7 py-2 text-white rounded-xl hover:bg-cyan-700 cursor-pointer">
-          Submit
-        </button>
+            Submit
+          </button>
         </div>
       </form>
     </div>
