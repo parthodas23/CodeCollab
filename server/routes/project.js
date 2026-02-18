@@ -56,7 +56,7 @@ router.post("/invite-link/:projectId", async (req, res) => {
 
     if (!project) return res.status(404).json({ message: "Invalid Link" });
     if (project.userId !== userId) {
-      res.status(403).json({ message: "Not Allowed." });
+      res.status(403).json({ message: "Not Allowed (For Owner Only)." });
     }
 
     const token = crypto.randomBytes(32).toString("hex");
