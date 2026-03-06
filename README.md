@@ -1,4 +1,4 @@
-# Collaborative Coding Platform (In Progress)
+# Collaborative Coding Platform
 
 A MERN-stack application where multiple users can create projects, chat, and write code together in real time.
 
