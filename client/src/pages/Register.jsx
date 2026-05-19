@@ -1,30 +1,24 @@
 import React, { useState } from "react";
 import axios from "axios";
 import { Link, useNavigate } from "react-router-dom";
+import { registerData } from "../api/register";
 
 function Register() {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const navigate = useNavigate();
+  const [error, setError] = useState(null);
 
   const onSubmit = async (e) => {
+    setError(null);
     e.preventDefault();
 
     try {
-      await axios.post(
-        `${import.meta.env.VITE_API_URL}/api/register`,
-        {
-          name,
-          email,
-          password,
-        },
-        { withCredentials: true },
-      );
+      await registerData(name, email, password);
       navigate("/login");
     } catch (error) {
-      console.log(error);
-      return;
+      setError(error.message);
     }
   };
   return (
@@ -79,6 +73,11 @@ function Register() {
             </Link>
           </p>
         </div>
+        {error && (
+          <div className="text-sm text-red-400 bg-red-50 border border-red-100 px-4 py-2.5 rounded-lg">
+            {error}
+          </div>
+        )}
         <div className="flex justify-center mt-7">
           <button className="bg-cyan-600 px-7 py-2 text-white rounded-xl hover:bg-cyan-700 cursor-pointer">
             Submit

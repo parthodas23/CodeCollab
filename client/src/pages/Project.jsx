@@ -31,7 +31,7 @@ function Project() {
           fileName,
           content,
         },
-        { withCredentials: treu },
+        { withCredentials: true },
       );
     } catch (error) {
       console.log(error);

@@ -17,11 +17,18 @@ const Dashboard = () => {
   const [projects, setProjects] = useState([]);
   const [projectName, setProjectName] = useState("");
   let [copied, setCopied] = useState(false);
+  let [error, setError] = useState(null);
 
   useEffect(() => {
+    setError(null);
+
     const fetchUserData = async () => {
-      const user = await getUserData(navigate);
-      setData(user);
+      try {
+        const user = await getUserData(navigate);
+        setData(user);
+      } catch (error) {
+        setError(error.message);
+      }
     };
 
     fetchUserData();
@@ -30,27 +37,44 @@ const Dashboard = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    const res = await axios.post(
-      `${import.meta.env.VITE_API_URL}/api/project/create`,
-      {
-        name: projectName,
-        userId,
-      },
-      { withCredentials: true },
-    );
+    setError(null);
 
-    setProjects([...projects, res.data]);
-    setProjectName("");
-    setPopup(false);
+    try {
+      const res = await axios.post(
+        `${import.meta.env.VITE_API_URL}/api/project/create`,
+        {
+          name: projectName,
+          userId,
+        },
+        { withCredentials: true },
+      );
+
+      setProjects([...projects, res.data]);
+      setProjectName("");
+      setPopup(false);
+    } catch (error) {
+      setError(error.message);
+    }
   };
 
   useEffect(() => {
     if (!userId) return;
-    axios
-      .get(`${import.meta.env.VITE_API_URL}/api/project/all/${userId}`, {
-        withCredentials: true,
-      })
-      .then((res) => setProjects(res.data));
+    setError(null);
+    const fetchAllProjectData = async () => {
+      try {
+        let res = await axios.get(
+          `${import.meta.env.VITE_API_URL}/api/project/all/${userId}`,
+          {
+            withCredentials: true,
+          },
+        );
+        setProjects(res.data);
+      } catch (error) {
+        setError(error.message);
+      }
+    };
+
+    fetchAllProjectData();
   }, [userId]);
 
   return (
@@ -158,6 +182,12 @@ const Dashboard = () => {
               </button>
             </div>
           </div>
+        </div>
+      )}
+
+      {error && (
+        <div className="text-sm text-red-400 bg-red-50 border border-red-100 px-4 py-2.5 rounded-lg">
+          {error}
         </div>
       )}
 
