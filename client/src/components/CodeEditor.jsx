@@ -1,55 +1,71 @@
-import React, { useState, useRef } from "react";
-import Prism from "prismjs";
-import "prismjs/components/prism-javascript";
-import "prismjs/themes/prism-tomorrow.css";
+import React, { useEffect, useRef, useState } from "react";
+import * as Y from "yjs";
+import { EditorView, basicSetup } from "codemirror";
+import { keymap } from "@codemirror/view";
+import { indentWithTab } from "@codemirror/commands";
+import { javascript } from "@codemirror/lang-javascript";
+import { oneDark } from "@codemirror/theme-one-dark";
+import { yCollab, yUndoManagerKeymap } from "y-codemirror.next";
 
-function CustomCodeEditor({ code, setCode, fileName }) {
+// keep the old editor colors
+const editorTheme = EditorView.theme(
+  {
+    "&": { height: "100%", fontSize: "14px", backgroundColor: "#2d2d2d" },
+    ".cm-gutters": { backgroundColor: "#1e1e1e", border: "none" },
+  },
+  { dark: true },
+);
+
+// runs in a Web Worker with its own origin: no access to the page, the token or the API,
+// and an endless loop can be stopped
+const runner = `onmessage = (e) => {
+  const logs = [];
+  const show = (v) => (typeof v === "object" ? JSON.stringify(v) : String(v));
+  console.log = console.info = console.warn = console.error = (...args) => logs.push(args.map(show).join(" "));
+  try { new Function(e.data)(); } catch (error) { logs.push("Error: " + error.message); }
+  postMessage(logs.join("\\n") || "✓ code run successfully");
+};`;
+
+function CodeEditor({ ytext, awareness, fileName }) {
   const [output, setOutput] = useState("");
-  const textareaRef = useRef(null);
+  const editorRef = useRef(null);
 
-  const lines = code ? code.split("\n").length : 1;
+  // bind CodeMirror to the shared Y.Text: edits, remote cursors and undo all go through Yjs
+  useEffect(() => {
+    const undoManager = new Y.UndoManager(ytext);
+    const view = new EditorView({
+      doc: ytext.toString(),
+      parent: editorRef.current,
+      extensions: [
+        keymap.of([...yUndoManagerKeymap, indentWithTab]), // Ctrl+Z undoes only your own edits, Tab indents
+        yCollab(ytext, awareness, { undoManager }),
+        basicSetup,
+        javascript(),
+        editorTheme, // before oneDark so it wins
+        oneDark,
+      ],
+    });
 
-  // Highlight JS code
-  const highlightedCode = Prism.highlight(
-    code,
-    Prism.languages.javascript,
-    "javascript",
-  );
-
-  // TAB support
-  const handleKeyDown = (e) => {
-    if (e.key === "Tab") {
-      e.preventDefault();
-      const textarea = textareaRef.current;
-      const start = textarea.selectionStart;
-      const end = textarea.selectionEnd;
-
-      const newCode = code.substring(0, start) + "  " + code.substring(end);
-
-      setCode(newCode);
-
-      requestAnimationFrame(() => {
-        textareaRef.selectionStart = textareaRef.selectionEnd = start + 2;
-      });
-    }
-  };
+    return () => {
+      view.destroy();
+      undoManager.destroy();
+    };
+  }, [ytext, awareness]);
 
   const runCode = () => {
-    setOutput("");
+    const worker = new Worker(`data:text/javascript,${encodeURIComponent(runner)}`);
+    const timer = setTimeout(() => {
+      worker.terminate();
+      setOutput("Error: stopped after 3 seconds (infinite loop?)");
+    }, 3000);
 
-    const logs = [];
-    const originalLog = console.log; // this is act like a temp varibile
-
-    console.log = (...args) => logs.push(args.join(" "));
-    // console.log("Hello")  -->  logs.push("Hello")
-
-    try {
-      eval(code); // this evaluates js code and executes it
-      setOutput(logs.join("\n") || "✓ code run successfully");
-    } catch (error) {
-      setOutput("Error: " + error.message);
-    }
-    console.log = originalLog; // here we used the temp var
+    worker.onmessage = (e) => {
+      clearTimeout(timer);
+      worker.terminate();
+      setOutput(e.data);
+    };
+    setOutput("Running...");
+    worker.postMessage(ytext.toString());
   };
 
   return (
@@ -66,44 +82,19 @@ function CustomCodeEditor({ code, setCode, fileName }) {
       </div>
 
       {/* editor area */}
-      <div className="flex-1 min-h-0 relative overflow-y-auto custom-scrollbar">
-        <div className="min-h-full flex">
-          {/* line numbers */}
-          <div className="w-12 bg-[#1e1e1e] text-gray-500 pr-3 pt-4 text-sm font-mono text-right">
-            {Array.from({ length: lines }).map((_, i) => (
-              <div key={i}>{i + 1}</div>
-            ))}
-          </div>
-          {/* editor input area */}
-          <div className="relative flex-1">
-            <textarea
-              className="absolute inset-0 w-full h-full resize-none outline-none bg-transparent caret-white text-transparent p-4 font-mono text-sm z-10"
-              ref={textareaRef}
-              value={code}
-              onChange={(e) => setCode(e.target.value)}
-              spellCheck="false"
-              onKeyDown={handleKeyDown}
-            />
-            <pre
-              aria-hidden="true"
-              className="m-0 p-4 font-mono text-sm pointer-events-none whitespace-pre-wrap wrap-break-word text-gray-100"
-              dangerouslySetInnerHTML={{ __html: highlightedCode + "\n" }}
-            />
-          </div>
-        </div>
-      </div>
-      {/* fixed output */}
+      <div ref={editorRef} className="flex-1 min-h-0" />
 
+      {/* fixed output */}
       <div className="h-34 border-t border-gray-700 bg-[#1e1e1e] flex flex-col">
         <div className="px-3 py-1 text-xs text-gray-500 font-bold uppercase border-b border-gray-800">
           Output
         </div>
         <div className="flex-1 p-3 text-green-500 font-mono text-sm overflow-y-auto whitespace-pre-wrap">
-          {output || <span> Exicution will be appear here </span>}
+          {output || <span className="text-gray-500">Execution output will appear here</span>}
         </div>
       </div>
     </div>
   );
 }
 
-export default CustomCodeEditor;
+export default CodeEditor;

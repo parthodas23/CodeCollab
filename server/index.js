@@ -1,3 +1,7 @@
+import dns from "dns";
+dns.setDefaultResultOrder("ipv4first");
+dns.setServers(["8.8.8.8", "8.8.4.4"]);
+
 import express from "express";
 import { ENV } from "./lib/ENV.js";
 import { connectDB } from "./lib/connectDB.js";
@@ -8,6 +12,7 @@ import cors from "cors";
 import { Server } from "socket.io";
 import http from "node:http";
 import socketHandler from "./socket/socketHandler.js";
+import { errorHandler } from "./middleware/errorHandler.js";
 const app = express();
 const server = http.createServer(app);
 
@@ -54,6 +59,8 @@ app.use("/api/project", projectRoute);
 app.get("/health", (req, res) => {
   res.json({ status: "ok" });
 });
+
+app.use(errorHandler);
 server.listen(ENV.PORT || 5000, () => {
   console.log("Server running on the port", ENV.PORT);
 });

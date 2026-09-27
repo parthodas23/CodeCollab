@@ -5,13 +5,17 @@ const fileSchema = new mongoose.Schema({
   content: { type: String, default: "" },
 });
 
-const projectSchema = new mongoose.Schema({
-  name: { type: String },
-  userId: { type: String, required: true }, // owner
-  files: [fileSchema],
-  members: [{ type: String }],
-  inviteToken: String,
-  inviteExpires: Date,
-});
+const projectSchema = new mongoose.Schema(
+  {
+    name: { type: String },
+    userId: { type: String, required: true }, // owner
+    files: [fileSchema],
+    members: [{ type: String }],
+    inviteToken: String,
+    inviteExpires: Date,
+    ydoc: { type: Buffer, select: false }, // Yjs (CRDT) state of all files
+  },
+  { timestamps: true },
+);
 
 export default mongoose.model("Project", projectSchema);

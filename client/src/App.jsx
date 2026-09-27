@@ -30,7 +30,14 @@ function App() {
         />
         <Route path="/register" element={<Register />} />
         <Route path="/login" element={<Login />} />
-        <Route path="/invite/:token" element={<Invite />} />
+        <Route
+          path="/invite/:token"
+          element={
+            <ProtectedRoute>
+              <Invite />
+            </ProtectedRoute>
+          }
+        />
       </Routes>
     </BrowserRouter>
   );

@@ -1,0 +1,6 @@
+{
+  "dependencies": {
+    "codemirror": "^6.0.2",
+    "yjs": "^13.6.33"
+  }
+}

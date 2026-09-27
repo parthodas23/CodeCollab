@@ -1,37 +1,27 @@
-import React from "react";
-import axios from "axios";
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { getUserData } from "../data/getUserData";
 import { IoPersonAdd } from "react-icons/io5";
+import api from "../api/axios";
 
 const Dashboard = () => {
-  const [data, setData] = useState("");
-  const navigate = useNavigate();
+  const [data, setData] = useState(null);
   const [inviteModal, setInviteModal] = useState(false);
   const [inviteLink, setInviteLink] = useState("");
   const userId = data?._id;
   const [popup, setPopup] = useState(false);
   const [projects, setProjects] = useState([]);
   const [projectName, setProjectName] = useState("");
-  let [copied, setCopied] = useState(false);
-  let [error, setError] = useState(null);
+  const [copied, setCopied] = useState(false);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
-    setError(null);
-
-    const fetchUserData = async () => {
-      try {
-        const user = await getUserData(navigate);
+    Promise.all([getUserData(), api.get("/api/project/all")])
+      .then(([user, res]) => {
         setData(user);
-      } catch (error) {
-        setError(error.message);
-      }
-    };
-
-    fetchUserData();
+        setProjects(res.data);
+      })
+      .catch((error) => setError(error.message));
   }, []);
 
   const handleSubmit = async (e) => {
@@ -40,14 +30,7 @@ const Dashboard = () => {
     setError(null);
 
     try {
-      const res = await axios.post(
-        `${import.meta.env.VITE_API_URL}/api/project/create`,
-        {
-          name: projectName,
-          userId,
-        },
-        { withCredentials: true },
-      );
+      const res = await api.post("/api/project/create", { name: projectName });
 
       setProjects([...projects, res.data]);
       setProjectName("");
@@ -57,25 +40,18 @@ const Dashboard = () => {
     }
   };
 
-  useEffect(() => {
-    if (!userId) return;
+  const createInviteLink = async (e, projectId) => {
+    e.preventDefault(); // stop link navigation
     setError(null);
-    const fetchAllProjectData = async () => {
-      try {
-        let res = await axios.get(
-          `${import.meta.env.VITE_API_URL}/api/project/all/${userId}`,
-          {
-            withCredentials: true,
-          },
-        );
-        setProjects(res.data);
-      } catch (error) {
-        setError(error.message);
-      }
-    };
 
-    fetchAllProjectData();
-  }, [userId]);
+    try {
+      const res = await api.post(`/api/project/invite-link/${projectId}`);
+      setInviteLink(res.data.inviteLink);
+      setInviteModal(true);
+    } catch (error) {
+      setError(error.message);
+    }
+  };
 
   return (
     <div className="relative min-h-screen bg-slate-50 px-6 py-8">
@@ -98,6 +74,18 @@ const Dashboard = () => {
         </button>
       </div>
 
+      {error && (
+        <div className="max-w-4xl mx-auto mb-6 text-sm text-red-400 bg-red-50 border border-red-100 px-4 py-2.5 rounded-lg">
+          {error}
+        </div>
+      )}
+
+      {data && projects.length === 0 && (
+        <p className="max-w-4xl mx-auto text-slate-500">
+          No projects yet. Create one to start coding together.
+        </p>
+      )}
+
       {/* Projects Section */}
       {projects.length > 0 && (
         <section className="max-w-4xl mx-auto">
@@ -116,26 +104,14 @@ const Dashboard = () => {
                   {project.name}
                 </span>
 
-                <IoPersonAdd
-                  onClick={async (e) => {
-                    e.preventDefault(); // stop link navigation
-                    e.stopPropagation(); // stop bubbling
-
-                    try {
-                      const res = await axios.post(
-                        `${import.meta.env.VITE_API_URL}/api/project/invite-link/${project._id}`,
-                        { userId },
-                      );
-
-                      setInviteLink(res.data.inviteLink);
-                      setInviteModal(true);
-                    } catch (error) {
-                      alert("Failed to generate invite link.");
-                      console.log(error);
-                    }
-                  }}
-                  className="cursor-pointer text-xl text-slate-400 hover:text-indigo-600 transition"
-                />
+                {/* only the owner can invite */}
+                {project.userId === userId && (
+                  <IoPersonAdd
+                    title="Invite member"
+                    onClick={(e) => createInviteLink(e, project._id)}
+                    className="cursor-pointer text-xl text-slate-400 hover:text-indigo-600 transition"
+                  />
+                )}
               </Link>
             ))}
           </div>
@@ -145,7 +121,7 @@ const Dashboard = () => {
       {inviteModal && (
         <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50">
           <div className="bg-white w-full max-w-md p-6 rounded-xl shadow-xl">
-            <h2 className="text-xl font-smibold text-slate-800 mb-4 ">
+            <h2 className="text-xl font-semibold text-slate-800 mb-4">
               Invite Member
             </h2>
             <div className="flex items-center gap-2 bg-slate-100 p-3 rounded-2xl">
@@ -182,12 +158,6 @@ const Dashboard = () => {
               </button>
             </div>
           </div>
-        </div>
-      )}
-
-      {error && (
-        <div className="text-sm text-red-400 bg-red-50 border border-red-100 px-4 py-2.5 rounded-lg">
-          {error}
         </div>
       )}
 

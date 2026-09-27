@@ -1,28 +1,24 @@
 import React, { useState } from "react";
-import axios from "axios";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
+import api from "../api/axios";
+
 function Login() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [error, setError] = useState(null);
   const navigate = useNavigate();
+  const location = useLocation();
 
   const onSubmit = async (e) => {
     e.preventDefault();
+    setError(null);
 
     try {
-      const res = await axios.post(
-        `${import.meta.env.VITE_API_URL}/api/login`,
-        {
-          email: email,
-          password: password,
-        },
-        { withCredentials: true }
-      );
+      const res = await api.post("/api/login", { email, password });
       localStorage.setItem("accessToken", res.data.accessToken);
-      alert("Login Successfull");
-      navigate("/");
+      navigate(location.state?.from || "/", { replace: true }); // back to the invite link, if any
     } catch (error) {
-      console.log(error);
+      setError(error.message);
     }
   };
   return (
@@ -39,7 +35,7 @@ function Login() {
           <label className="flex flex-col gap-4">
             Email
             <input
-              type="text"
+              type="email"
               placeholder="email address"
               required
               value={email}
@@ -67,6 +63,11 @@ function Login() {
             </Link>{" "}
           </p>
         </div>
+        {error && (
+          <div className="mt-3 text-sm text-red-400 bg-red-50 border border-red-100 px-4 py-2.5 rounded-lg">
+            {error}
+          </div>
+        )}
         <div className="flex justify-center mt-7">
           <button className="px-10 py-1.5 bg-blue-500 text-white rounded-2xl hover:bg-blue-600 cursor-pointer">
             Login

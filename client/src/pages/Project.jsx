@@ -1,151 +1,87 @@
-import axios from "axios";
-import React from "react";
-import { useEffect } from "react";
-import { useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
-import { IoSend } from "react-icons/io5";
+import React, { useEffect, useRef, useState } from "react";
+import * as Y from "yjs";
+import { Link, useParams } from "react-router-dom";
+import { IoArrowBack, IoSend } from "react-icons/io5";
 import CodeEditor from "../components/CodeEditor";
-import { io } from "socket.io-client";
-import { getUserData } from "../data/getUserData";
-import { useRef } from "react";
-import { debounce } from "lodash";
+import { useProjectRoom } from "../collab";
 
 function Project() {
   const { projectId } = useParams();
-  const [data, setData] = useState(null);
-  const [chat, setChat] = useState([]);
+  const { room, name, files, users, messages, online, error } = useProjectRoom(projectId);
   const [text, setText] = useState("");
-  const [userData, setUserData] = useState(null);
-  const navigate = useNavigate();
-  const socketRef = useRef(null);
-  const [files, setFiles] = useState({
-    "main.js": "console.log('Hello Wrold')",
-  });
-  const [activeFile, setActiveFile] = useState("main.js");
+  const [activeFile, setActiveFile] = useState(null);
+  const chatEndRef = useRef(null);
 
-  const saveFileToDB = async (fileName, content) => {
-    try {
-      await axios.put(
-        `${import.meta.env.VITE_API_URL}/api/project/file/${projectId}`,
-        {
-          fileName,
-          content,
-        },
-        { withCredentials: true },
-      );
-    } catch (error) {
-      console.log(error);
-    }
-  };
+  const currentFile = files.includes(activeFile) ? activeFile : files[0];
+  const ytext = room?.doc.getMap("files").get(currentFile);
 
-  const debounceRef = useRef(
-    debounce((fileName, content) => saveFileToDB(fileName, content), 500),
-  );
+  // let the others see which file we are in
+  useEffect(() => {
+    room?.awareness.setLocalStateField("file", currentFile);
+  }, [room, currentFile]);
 
   useEffect(() => {
-    if (!projectId) return;
-
-    axios
-      .get(`${import.meta.env.VITE_API_URL}/api/project/files/${projectId}`, {
-        withCredentials: true,
-      })
-      .then((res) => {
-        const fileObject = {};
-        res.data?.forEach((file) => {
-          fileObject[file.name] = file.content;
-        });
-
-        setFiles(fileObject);
-
-        if (res.data?.length > 0) {
-          setActiveFile(res.data[0].name);
-        }
-      });
-  }, [projectId]);
-
-  useEffect(() => {
-    socketRef.current = io(`${import.meta.env.VITE_API_URL}`, {
-      withCredentials: true,
-    });
-
-    return () => {
-      socketRef.current.disconnect();
-    };
-  }, []);
-
-  useEffect(() => {
-    if (!projectId) return;
-    socketRef.current.emit("join-project", projectId);
-  }, [projectId]);
-
-  useEffect(() => {
-    socketRef.current.on("recive-message", (newMessage) => {
-      setChat((prev) => [...prev, newMessage]);
-    });
-
-    return () => {
-      socketRef.current.off("recive-message");
-    };
-  }, []);
-
-  useEffect(() => {
-    const fetchUserData = async () => {
-      const user = await getUserData(navigate);
-      setUserData(user);
-    };
-
-    fetchUserData();
-  }, []);
+    chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages.length]);
 
   const createFile = () => {
-    const fileName = prompt("Enter JavaScript file name:");
+    const fileName = prompt("Enter JavaScript file name:")?.trim();
     if (!fileName) return;
 
-    if (files[fileName]) {
+    const fileMap = room.doc.getMap("files");
+    if (fileMap.has(fileName)) {
       alert("File already Exists.");
       return;
     }
 
-    setFiles({ ...files, [fileName]: "" });
+    fileMap.set(fileName, new Y.Text()); // shows up for everyone instantly
+    setActiveFile(fileName);
   };
 
-  const sendMessage = () => {
+  const sendMessage = (e) => {
+    e.preventDefault();
     if (!text.trim()) return;
 
-    const userName = userData?.name;
-    const userId = userData?._id;
-    socketRef.current.emit("send-message", {
-      projectId,
-      userName,
-      userId,
-      text,
-    });
+    room.socket.emit("send-message", text);
     setText("");
   };
 
-  useEffect(() => {
-    if (!projectId) return;
-    axios
-      .get(`${import.meta.env.VITE_API_URL}/api/project/data/${projectId}`, {
-        withCredentials: true,
-      })
-      .then((res) => setData(res.data));
-  }, [projectId]);
-
-  useEffect(() => {
-    if (!projectId) return;
-    axios
-      .get(
-        `${import.meta.env.VITE_API_URL}/api/project/messages/${projectId}`,
-        { withCredentials: true },
-      )
-      .then((res) => setChat(res.data));
-  }, [projectId]);
+  if (error) {
+    return (
+      <div className="h-screen flex flex-col items-center justify-center gap-3 bg-slate-50">
+        <p className="text-red-500">{error}</p>
+        <Link to="/" className="text-indigo-600 hover:underline">
+          Back to dashboard
+        </Link>
+      </div>
+    );
+  }
 
   return (
     <div className="h-screen flex flex-col">
-      <div className="bg-gray-800 text-white flex items-center px-4 h-14">
-        {data?.name}
+      <div className="bg-gray-800 text-white flex items-center gap-3 px-4 h-14">
+        <Link to="/" className="text-gray-400 hover:text-white" title="Dashboard">
+          <IoArrowBack />
+        </Link>
+        {name}
+        <span
+          title={online ? "Connected" : "Offline, changes will sync when you reconnect"}
+          className={`w-2 h-2 rounded-full ${online ? "bg-green-500" : "bg-gray-500"}`}
+        />
+
+        {/* who is online (same colors as their cursors) */}
+        <div className="ml-auto flex -space-x-2">
+          {users.map((u) => (
+            <span
+              key={u.id}
+              title={`${u.name}${u.self ? " (you)" : ""} - ${u.file || ""}`}
+              style={{ backgroundColor: u.color }}
+              className="w-8 h-8 rounded-full border-2 border-gray-800 flex items-center justify-center text-sm font-semibold text-gray-900"
+            >
+              {u.name[0].toUpperCase()}
+            </span>
+          ))}
+        </div>
       </div>
 
       {/* flex-1 take the rest of spaces */}
@@ -157,7 +93,7 @@ function Project() {
           </div>
 
           <div className="flex-1 min-h-0 overflow-y-auto p-3 space-y-3">
-            {chat?.map((m) => (
+            {messages.map((m) => (
               <div
                 key={m._id}
                 className="bg-white rounded-xl p-3 shadow break-words"
@@ -169,9 +105,10 @@ function Project() {
                 <p className="mt-1 text-gray-800">{m.text}</p>
               </div>
             ))}
+            <div ref={chatEndRef} />
           </div>
 
-          <div className="h-14 border-t flex">
+          <form onSubmit={sendMessage} className="h-14 border-t flex">
             <input
               className="flex-1 outline-none px-3"
               type="text"
@@ -179,11 +116,14 @@ function Project() {
               value={text}
               onChange={(e) => setText(e.target.value)}
             />
-            <IoSend
-              onClick={() => sendMessage()}
+            <button
+              type="submit"
+              disabled={!room}
               className="text-3xl m-3 cursor-pointer hover:text-green-500"
-            />
-          </div>
+            >
+              <IoSend />
+            </button>
+          </form>
         </div>
 
         <div className="w-64 bg-gray-200 flex flex-col border-r">
@@ -193,18 +133,32 @@ function Project() {
           <div className="flex-1 min-h-0 overflow-y-auto p-3">
             <button
               onClick={createFile}
-              className="mb-2 bg-blue-500 px-2 py-1 text-sm rounded cursor-pointer hover:bg-blue-600"
+              disabled={!room}
+              className="mb-2 bg-blue-500 text-white px-2 py-1 text-sm rounded cursor-pointer hover:bg-blue-600"
             >
               + New File
             </button>
 
-            {Object.keys(files).map((fileName) => (
+            {files.map((fileName) => (
               <div
                 key={fileName}
                 onClick={() => setActiveFile(fileName)}
-                className={`cursor-pointer py-1 px-2 rounded ${activeFile === fileName ? "bg-gray-400" : ""}`}
+                className={`cursor-pointer py-1 px-2 rounded flex items-center justify-between ${currentFile === fileName ? "bg-gray-400" : ""}`}
               >
                 {fileName}
+                {/* dots = other people in this file */}
+                <span className="flex gap-1">
+                  {users
+                    .filter((u) => !u.self && u.file === fileName)
+                    .map((u) => (
+                      <span
+                        key={u.id}
+                        title={u.name}
+                        style={{ backgroundColor: u.color }}
+                        className="w-2 h-2 rounded-full"
+                      />
+                    ))}
+                </span>
               </div>
             ))}
           </div>
@@ -212,17 +166,18 @@ function Project() {
 
         {/* codeEditor */}
         <div className="flex flex-1 min-h-0">
-          <CodeEditor
-            code={files[activeFile] || ""}
-            setCode={(newCode) => {
-              setFiles((prev) => ({
-                ...prev,
-                [activeFile]: newCode,
-              }));
-              debounceRef.current(activeFile, newCode);
-            }}
-            fileName={activeFile}
-          />
+          {ytext ? (
+            <CodeEditor
+              key={currentFile}
+              ytext={ytext}
+              awareness={room.awareness}
+              fileName={currentFile}
+            />
+          ) : (
+            <div className="flex-1 bg-[#2d2d2d] text-gray-400 flex items-center justify-center">
+              Connecting...
+            </div>
+          )}
         </div>
       </div>
     </div>

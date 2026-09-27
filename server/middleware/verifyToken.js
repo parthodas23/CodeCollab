@@ -1,21 +1,20 @@
-import jwt from "jsonwebtoken";
-import { ENV } from "../lib/ENV.js";
+import { verifyAccessToken } from "../lib/token.js";
 
-// this for backend protected route
 export const verifyToken = (req, res, next) => {
+  const authHeader = req.headers.authorization;
+
+  if (!authHeader?.startsWith("Bearer ")) {
+    return res.status(401).json({ message: "No token provided" });
+  }
+
+  const token = authHeader.split(" ")[1];
   try {
-    let authHeader = req.headers.authorization;
-    if (!authHeader) return res.sendStatus(401);
-    const token = authHeader.split(" ")[1];
-    if (!token) return res.sendStatus(401);
+    const decoded = verifyAccessToken(token);
 
-    jwt.verify(token, ENV.ACCESS_SECRET, (err, decoded) => {
-      if (err) return res.sendStatus(401);
-
-      req.userId = decoded.id;
-      next();
-    });
+    req.userId = decoded.id;
+    next();
   } catch (error) {
-    return res.status(503).json(err);
+    return res.status(401).json({ message: "Invalid or expired token." });
+    // 401 = not authenticated
   }
 };
